@@ -1,0 +1,28 @@
+/aclocal.m4
+/autom4te.cache/
+/autoscan.log
+/compile
+/config.*
+/configure.scan
+/depcomp
+/.deps/
+/gengo
+/gengo.plist/
+/gengo.t2t
+#the next are unique to gengo, generated at init stage
+/codeTXT.c
+/declTXT.h
+/defltTXT.c
+/helpTXT.h
+/noargsTXT.c
+#next also, but generated at the code generate stage.
+/getoptions.c
+/getoptions.h
+/main.c
+#end of specials
+/install-sh
+/Makefile
+/Makefile.in
+/missing
+/stamp-h1
+/test*
