@@ -30,14 +30,21 @@ int checkfirstrun(char *progname)
 
 void firstrun(char *progname, ...)
 {
+	/* The purpose of this function is to copy a caller specified set
+	 * of files from /usr/local/share/<progname>/ to
+	 * $HOME/.config/<progname>/
+	 * The assumption is that the user who built the program has not
+	 * meddled with --prefix at configure time. Anyone who has the
+	 * confidence to do this will no doubt have the ability to make
+	 * the necessary copies by hand instead of relying on this feature.
+	*/
 	va_list ap;
 	char upath[NAME_MAX];
 	char command[NAME_MAX];
 	sprintf(upath, "%s/.config/%s/", getenv("HOME"), progname);
 	sprintf(command, "mkdir -p %s", upath);
 	dosystem(command);
-	// temporary srcpath until autotools is set up
-	char *srcpath = "/home/bob/Documents/Programs/Gengetopt2/";
+	char *srcpath = "/usr/local/share/gengo/";
 	va_start(ap, progname);	// allow this to work with 0 named files.
 	char *cp;
 	char fn[NAME_MAX];
