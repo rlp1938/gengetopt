@@ -395,49 +395,46 @@ void generatecode(const char *progname, int cols)
 	// 1. generate main.c
 	fdata bpdat = readfile(mainBP_C, 0, 1);
 	// a) write the preamble.
-	fdata bppart = bracketsearch(bpdat.from, bpdat.to,
-								NULL, NULL,
-								"\n/* non-option arguments */",
-								"Corrupt mainBP.c, "
-								"'/*non-option arguments*/' not found."
-								);
+	char *sft = NULL;
+	char *sfem = NULL;
+	char *stt = "\n/* non-option arguments */";
+	char *stem = "Corrupt mainBP.c, '/*non-option arguments*/' not found.";
+
+	fdata bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt,
+									stem);
 	writefile("main.c", bppart.from, bppart.to, "w");
 	// b) append non-option argument processing
 	fdata wfdat = readfile("noargsTXT.c", 0, 1);
 	writefile("main.c", wfdat.from, wfdat.to, "a");
 	free(wfdat.from);
 	// c) append the rest of main.c
-	bppart = bracketsearch(bpdat.from, bpdat.to,
-								"\n/* non-option arguments */",
-								"no emesg needed.",
-								NULL, NULL
-								);
+	sft = "\n/* non-option arguments */";
+	sfem = "no emesg needed.";
+	stt = NULL;
+	stem = NULL;
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("main.c", bppart.from, bppart.to, "a");
 	free(bpdat.from);
 
 	// 2. generate getoptions.h
 	bpdat = readfile(getoptionsBP_H, 0, 1);
 	// a) write the preamble.
-	bppart = bracketsearch(bpdat.from, bpdat.to,
-								NULL, NULL,
-								"\n/* declarations */",
-								"Corrupt getoptionsBP.c, "
-								"'/* declarations */' not found."
-								);
+	sft = NULL;
+	sfem = NULL;
+	stt = "\n/* declarations */";
+	stem = "Corrupt getoptionsBP.c, '/* declarations */' not found.";
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "w");
-	// b) append the user's varaiable declarations.
+	// b) append the user's variable declarations.
 	wfdat = readfile("declTXT.h", 0, 1);
 	writefile("getoptions.h", wfdat.from, wfdat.to, "a");
 	free(wfdat.from);
 	// c) append part BP file
-	bppart = bracketsearch(bpdat.from, bpdat.to,
-							"\n/* helpmsg */",
-							"Corrupt getoptionsBP.c, '* helpmsg */'"
-							" not found.",
-							"\n/* usage */",
-							"Corrupt getoptionsBP.c, "
-							"'/* usage */' not found."
-							);
+	sft = "\n/* helpmsg */";
+	sfem = "Corrupt getoptionsBP.c, '* helpmsg */' not found.";
+	stt = "\n/* usage */";
+	stem = "Corrupt getoptionsBP.c, '/* usage */' not found.";
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
 	// d) append the help text.
 	wfdat = readfile("helpTXT.h", 0, 1);
@@ -445,39 +442,38 @@ void generatecode(const char *progname, int cols)
 	bppart = fmtusagelines(progname, wfdat.from, wfdat.to);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
 	// d.2) append the common options help lines.
-	bppart = bracketsearch(bpdat.from, bpdat.to,
-							"\n/* usage */", "emsg not needed",
-							"\n/* options */",
-							"Corrupt getoptionsBP.c, "
-							"'/* options */' not found."
-							);
+	sft = "\n/* usage */";
+	sfem = "emsg not needed";
+	stt = "\n/* options */";
+	stem = "Corrupt getoptionsBP.c, '/* options */' not found.";
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
 	// d.3) append the user's options help lines.
-	bppart = bracketsearch(wfdat.from, wfdat.to,
-							NULL, NULL,
-							"\n/* usage */",
-							"Corrupt helpTXT.h, "
-							"'/* usage */' not found."
-							);
+	sft = NULL;
+	sfem = NULL;
+	stt = "\n/* usage */";
+	stem = "Corrupt helpTXT.h, '/* usage */' not found.";
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	fdata hldat = fmthelplines(bppart.from, bppart.to, cols);
 	writefile("getoptions.h", hldat.from, hldat.to, "a");
 	free(hldat.from);
 	free(wfdat.from);
 	// e) append the tail end of the BP file.
-	bppart = bracketsearch(bpdat.from, bpdat.to,
-							"\n/* options */", "emsg not needed",
-							NULL, NULL
-						);
+	sft = "\n/* options */";
+	sfem = "emsg not needed";
+	stt = NULL;
+	stem = NULL;
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
 	free(bpdat.from);
 
 	// 3. write getoptions.c
 	bpdat = readfile(getoptionsBP_C, 0, 1);
 	// a) write the preamble.
-	char *sft = NULL;
-	char *sfem = NULL;
-	char *stt = "\n/* defaults */";
-	char *stem = "Corrupt getoptionsBP.c, '/* defaults */' not found.";
+	sft = NULL;
+	sfem = NULL;
+	stt = "\n/* defaults */";
+	stem = "Corrupt getoptionsBP.c, '/* defaults */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.c", bppart.from, bppart.to, "w");
 	// b) append defaults initialisation.

@@ -23,6 +23,7 @@
 /install-sh
 /Makefile
 /Makefile.in
+/Makefile.gdb
 /missing
 /stamp-h1
 /test*
