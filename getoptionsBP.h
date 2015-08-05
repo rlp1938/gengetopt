@@ -20,6 +20,19 @@
 
 #ifndef _GETOPTIONS_H
 #define _GETOPTIONS_H
+#define _GNU_SOURCE 1
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <getopt.h>
+#include <ctype.h>
+#include <limits.h>
+#include <linux/limits.h>
+#include <libgen.h>
+#include "fileops.h"
+#include "firstrun.h"
 int opt;
 /* declarations */
 

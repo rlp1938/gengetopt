@@ -27,7 +27,7 @@
 
 int main(int argc, char **argv)
 {
-	process_options(int argc, char **argv);
+	process_options(argc, argv);
 
 /* non-option arguments */
 
