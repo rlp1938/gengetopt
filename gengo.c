@@ -194,6 +194,7 @@ void getoptdata(char *useroptstring)
 	// Must initialise some stuff independently of user later input.
 	fputs("char *optstring;\n", fpdecl);
 	fprintf(fpdeflt, "\toptstring = %s;\n", optstringout);
+	fputs("\n/* helptext */\n", fphelp);
 
 	len = strlen(optstringout);
 
@@ -258,7 +259,6 @@ void getoptdata(char *useroptstring)
 
 		// Option helptext
 		getmultilines(outbuf, "help text", PATH_MAX, 1);
-		fputs("/*helptext*/\n", fphelp);
 		fprintf(fphelp, "-%c\n", c);
 		fputs(outbuf, fphelp);
 		fputs("\n", fphelp);	/* empty line marks end of help text
@@ -425,10 +425,12 @@ void generatecode(const char *progname, int cols)
 	stem = "Corrupt getoptionsBP.c, '/* declarations */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "w");
+	sync();
 	// b) append the user's variable declarations.
 	wfdat = readfile("declTXT.h", 0, 1);
 	writefile("getoptions.h", wfdat.from, wfdat.to, "a");
 	free(wfdat.from);
+	sync();
 	// c) append part BP file
 	sft = "\n/* helpmsg */";
 	sfem = "Corrupt getoptionsBP.c, '* helpmsg */' not found.";
@@ -436,11 +438,21 @@ void generatecode(const char *progname, int cols)
 	stem = "Corrupt getoptionsBP.c, '/* usage */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
+	sync();
 	// d) append the help text.
 	wfdat = readfile("helpTXT.h", 0, 1);
 	// d.1) append the usage lines
-	bppart = fmtusagelines(progname, wfdat.from, wfdat.to);
+	// TODO: change fmtusagelines to deal with only lines that come
+	// after /* usage */ and use bracketsearch() to describe that scope.
+	sft = "\n/* usage */";
+	sfem = "not needed.";
+	stt = NULL;
+	stem = NULL;
+	bppart = bracketsearch(wfdat.from, wfdat.to, sft, sfem, stt, stem);
+	bppart = fmtusagelines(progname, bppart.from, bppart.to);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
+	free(bppart.from);
+	sync();
 	// d.2) append the common options help lines.
 	sft = "\n/* usage */";
 	sfem = "emsg not needed";
@@ -448,12 +460,13 @@ void generatecode(const char *progname, int cols)
 	stem = "Corrupt getoptionsBP.c, '/* options */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
+	sync();
 	// d.3) append the user's options help lines.
-	sft = NULL;
-	sfem = NULL;
+	sft = "\n/* helptext */";
+	sfem = "Corrupt helpTXT.h, '/* helptext */' not found.";
 	stt = "\n/* usage */";
 	stem = "Corrupt helpTXT.h, '/* usage */' not found.";
-	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
+	bppart = bracketsearch(wfdat.from, wfdat.to, sft, sfem, stt, stem);
 	fdata hldat = fmthelplines(bppart.from, bppart.to, cols);
 	writefile("getoptions.h", hldat.from, hldat.to, "a");
 	free(hldat.from);
@@ -515,43 +528,32 @@ fdata fmtusagelines(const char *progname, char *from, char *to)
 	*/
 	char retbuf[PATH_MAX];
 	char work[NAME_MAX];
-	fdata ret, usedat;
-	// find where the usage lines are in the mess starting at from.
-	usedat.from = memmem(from, to - from, "/* usage */",
-							strlen("/* usage */"));
-	if (!usedat.from) fatal("Corrupted help text file.");
-	usedat.to = to;
-	/* I must have the literal 'progname' following usedat.from. */
-	char *lp = memmem(usedat.from, usedat.to - usedat.from, "progname",
-						strlen("progname"));
-	if (!lp) fatal("Corrupted help text file.");
-	lp += strlen("progname");
-	while (*lp == ' ') lp++;
-	char *eol = memchr(lp, '\n', usedat.to - lp);
-	*eol = '\0';
+	fdata ret;
+	char *bol = from;
 	char *fmt = "  \"\\tUsage: %s %s\\n\"\n";
-	sprintf(work, fmt, progname, lp);
-	strcpy(retbuf, work);
-	// there may be more usage lines.
-	fmt = "  \"\\t       %s %s\\n\"\n";
-	while (1) {
-		lp = eol + 1;
-		eol = memchr(lp, '\n', usedat.to - lp);
-		if (eol) {
-			*eol = '\0';
-		} else {
-			break;
-		}
-		if (strlen(lp) == 0) {
-			break;
-		}
-		sprintf(work, fmt, progname, lp);
+	retbuf[0] = '\0';
+	char *eol = memchr(bol, '\n', to - bol);
+	if (!eol) fatal("Corrupt helpTXT.h, no '\n' found.");
+	*eol = '\0';
+	size_t sl;
+	do {
+		char *cp = strstr(bol, "progname");
+		if (cp) bol += strlen("progname") + 1;
+		sprintf(work, fmt, progname, bol);
 		strcat(retbuf, work);
-	}
+		fmt = "  \"\\t       %s %s\\n\"\n";
+		sl = strlen(bol);
+		bol += sl + 1;
+		eol = memchr(bol, '\n', to - bol);
+		if (!eol) break;
+		*eol = '\0';
+		sl = strlen(bol);
+	} while (sl);
+	strcat(retbuf, "\n");	// empty line after usage lines.
 	size_t len = strlen(retbuf);
 	ret.from = malloc(len);
 	memcpy(ret.from, retbuf, len);
-	ret.to = ret.from + len + 1;
+	ret.to = ret.from + len;
 	return ret;	// caller is required to free ret.from
 } // fmtusagelines()
 
@@ -582,7 +584,7 @@ fdata fmthelplines(char *from, char *to, int cols)
 		opthelp.from++;	// now pointing at the actual option
 		opthelp.to = memmem(opthelp.from, to - opthelp.from,
 							"\n-", 2);
-		if (!opthelp.to) opthelp.to = to;	// at last option.
+		if (!opthelp.to) opthelp.to = to;	// now at last option.
 		// make a copy of the user provided options mess.
 		char *optmess = malloc(opthelp.to - opthelp.from);
 		char *omend = optmess + (opthelp.to - opthelp.from);
@@ -652,7 +654,7 @@ fdata fmthelplines(char *from, char *to, int cols)
 	size_t len = strlen(resbuf);
 	retdat.from = malloc(len);
 	memcpy(retdat.from, resbuf, len);
-	retdat.to = retdat.from + len + 1;
+	retdat.to = retdat.from + len;
 	return retdat;
 } // fmthelplines()
 
