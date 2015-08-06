@@ -218,10 +218,10 @@ void getoptdata(char *useroptstring)
 			sprintf(codeopt, "%c", c);
 		}
 		fputs(eols, stdout);	// clear terminal window
-		fprintf(stdout, "For option: %c\n", c);
+		fprintf(stdout, "Processing option: %c\n", c);
 		fputs("For this option will you:\n"
 		"Use a single variable to which you assign a value (1)\n"
-		"Use a single char array and strcpy optarg into it (2)\n"
+		"Use a char pointer and strdup optarg onto it (2)\n"
 		"Or do something else, including affecting several variables\n"
 		"when the option is selected (3).\n", stdout);
 		char ans = 0;
@@ -237,11 +237,15 @@ void getoptdata(char *useroptstring)
 			// Option variable name.
 			getuserinput("Enter variable name: ", namebuf);
 			// Option variable type.
-			getuserinput("Enter variable type: ", typebuf);
+			if (ans == '2') {
+				strcpy(typebuf, "char *");
+			} else {
+				getuserinput("Enter variable type: ", typebuf);
+			}
 			sprintf(outbuf, "%s %s;\n", typebuf, namebuf);
 			fputs(outbuf, fpdecl);
 		} else {
-			fprintf(fpdecl, "/* Enter type(s) and name(s) for"
+			fprintf(fpdecl, "/* Enter type(s) and name(s) for\n"
 			" variable(s) affected by selecting option %c */\n", c);
 		}
 		// Option default value.
@@ -249,7 +253,7 @@ void getoptdata(char *useroptstring)
 			getuserinput("Enter variable default value: ", defltbuf);
 			sprintf(outbuf, "\t%s = %s;\n", namebuf, defltbuf);
 		} else if (ans == '2'){
-			sprintf(outbuf, "\t%s[0] = 0;\n", namebuf);
+			sprintf(outbuf, "\t%s[0] = NULL;\n", namebuf);
 		} else {	// ans == 3
 			sprintf(outbuf, "/* Enter names and default values "
 			"for any/all variables affected by selecting option %c */\n"
@@ -271,13 +275,13 @@ void getoptdata(char *useroptstring)
 			sprintf(outbuf, "\t\tcase %s:\n\t\t%s %s;\n\t\tbreak;\n",
 					codeopt, namebuf, codebuf);
 		} else if (ans == '2') {
-			sprintf(outbuf, "\t\tcase %s:\n\t\tstrcpy(%s, %s);"
+			sprintf(outbuf, "\t\tcase %s:\n\t\t%s=strdup(%s);"
 			"\n\t\tbreak;"
 			"\n", codeopt, namebuf, "optarg");
 		} else {	// ans == '3'
 			sprintf(outbuf, "\t\tcase %s:\n\t\t%s\n\t\tbreak;\n",
 			 codeopt,
-			"/* Enter the C code required to run when this option"
+			"/* Enter the C code required to run when this option\n"
 			" is selected. */");
 		}
 		fputs(outbuf, fpcode);
