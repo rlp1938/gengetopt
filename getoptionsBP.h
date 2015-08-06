@@ -31,8 +31,7 @@
 #include <limits.h>
 #include <linux/limits.h>
 #include <libgen.h>
-#include "fileops.h"
-#include "firstrun.h"
+
 int opt;
 /* declarations */
 
