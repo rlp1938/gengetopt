@@ -23,7 +23,7 @@
 void process_options(int argc, char **argv)
 {
 /* defaults */
-	while((opt = getopt(argc, argv, optstr)) != -1) {
+	while((opt = getopt(argc, argv)) != -1) {
 		switch(opt){
 		case 'h':
 			dohelp(0);
