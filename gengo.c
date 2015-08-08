@@ -253,9 +253,9 @@ void getoptdata(char *useroptstring)
 			getuserinput("Enter variable default value: ", defltbuf);
 			sprintf(outbuf, "\t%s = %s;\n", namebuf, defltbuf);
 		} else if (ans == '2'){
-			sprintf(outbuf, "\t%s[0] = NULL;\n", namebuf);
+			sprintf(outbuf, "\t%s = NULL;\n", namebuf);
 		} else {	// ans == 3
-			sprintf(outbuf, "/* Enter names and default values "
+			sprintf(outbuf, "/* Enter names and default values\n"
 			"for any/all variables affected by selecting option %c */\n"
 			, c);
 		}
@@ -407,10 +407,12 @@ void generatecode(const char *progname, int cols)
 	fdata bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt,
 									stem);
 	writefile("main.c", bppart.from, bppart.to, "w");
+
 	// b) append non-option argument processing
 	fdata wfdat = readfile("noargsTXT.c", 0, 1);
 	writefile("main.c", wfdat.from, wfdat.to, "a");
 	free(wfdat.from);
+
 	// c) append the rest of main.c
 	sft = "\n/* non-option arguments */";
 	sfem = "no emesg needed.";
@@ -422,70 +424,35 @@ void generatecode(const char *progname, int cols)
 
 	// 2. generate getoptions.h
 	bpdat = readfile(getoptionsBP_H, 0, 1);
+
 	// a) write the preamble.
 	sft = NULL;
 	sfem = NULL;
 	stt = "\n/* declarations */";
-	stem = "Corrupt getoptionsBP.c, '/* declarations */' not found.";
+	stem = "Corrupt getoptionsBP.h, '/* declarations */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "w");
 	sync();
+
 	// b) append the user's variable declarations.
 	wfdat = readfile("declTXT.h", 0, 1);
 	writefile("getoptions.h", wfdat.from, wfdat.to, "a");
 	free(wfdat.from);
 	sync();
-	// c) append part BP file
-	sft = "\n/* helpmsg */";
-	sfem = "Corrupt getoptionsBP.c, '* helpmsg */' not found.";
-	stt = "\n/* usage */";
-	stem = "Corrupt getoptionsBP.c, '/* usage */' not found.";
-	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
-	writefile("getoptions.h", bppart.from, bppart.to, "a");
-	sync();
-	// d) append the help text.
-	wfdat = readfile("helpTXT.h", 0, 1);
-	// d.1) append the usage lines
-	// TODO: change fmtusagelines to deal with only lines that come
-	// after /* usage */ and use bracketsearch() to describe that scope.
-	sft = "\n/* usage */";
+
+	// c) append the tail end of the BP file.
+	sft = "\n/* declarations */";
 	sfem = "not needed.";
 	stt = NULL;
 	stem = NULL;
-	bppart = bracketsearch(wfdat.from, wfdat.to, sft, sfem, stt, stem);
-	bppart = fmtusagelines(progname, bppart.from, bppart.to);
-	writefile("getoptions.h", bppart.from, bppart.to, "a");
-	free(bppart.from);
-	sync();
-	// d.2) append the common options help lines.
-	sft = "\n/* usage */";
-	sfem = "emsg not needed";
-	stt = "\n/* options */";
-	stem = "Corrupt getoptionsBP.c, '/* options */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.h", bppart.from, bppart.to, "a");
 	sync();
-	// d.3) append the user's options help lines.
-	sft = "\n/* helptext */";
-	sfem = "Corrupt helpTXT.h, '/* helptext */' not found.";
-	stt = "\n/* usage */";
-	stem = "Corrupt helpTXT.h, '/* usage */' not found.";
-	bppart = bracketsearch(wfdat.from, wfdat.to, sft, sfem, stt, stem);
-	fdata hldat = fmthelplines(bppart.from, bppart.to, cols);
-	writefile("getoptions.h", hldat.from, hldat.to, "a");
-	free(hldat.from);
-	free(wfdat.from);
-	// e) append the tail end of the BP file.
-	sft = "\n/* options */";
-	sfem = "emsg not needed";
-	stt = NULL;
-	stem = NULL;
-	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
-	writefile("getoptions.h", bppart.from, bppart.to, "a");
 	free(bpdat.from);
 
 	// 3. write getoptions.c
 	bpdat = readfile(getoptionsBP_C, 0, 1);
+
 	// a) write the preamble.
 	sft = NULL;
 	sfem = NULL;
@@ -497,19 +464,63 @@ void generatecode(const char *progname, int cols)
 	bppart = readfile("defltTXT.c", 0, 1);
 	writefile("getoptions.c", bppart.from, bppart.to, "a");
 	free(bppart.from);
-	// c) append the top of the options while loop.
-	sft = "\n/* defaults */";
-	sfem = "no emesg";	// search string exists
+
+	// c) append the usage and help lines
+	// c.1 write some boilerplate
+	sft = "\n/* helpmsg */";
+	sfem = "Corrupt getoptionsBP.c, '/* helpmsg */' not found.";
+	stt = "\n/* usage */";
+	stem = "Corrupt getoptionsBP.c, '/* usage */' not found.";
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
+	writefile("getoptions.c", bppart.from, bppart.to, "a");
+	wfdat = readfile("helpTXT.h", 0, 1);
+
+	// c.2) append the usage lines
+	sft = "\n/* usage */";
+	sfem = "Corrupt helpTXT.h, '/* usage */' not found.";
+	stt = NULL;
+	stem = NULL;
+	bppart = bracketsearch(wfdat.from, wfdat.to, sft, sfem, stt, stem);
+	bppart = fmtusagelines(progname, bppart.from, bppart.to);
+	writefile("getoptions.c", bppart.from, bppart.to, "a");
+	free(bppart.from);
+	sync();
+
+	// c.3) append the common options help lines.
+	sft = "\n/* usage */";
+	sfem = "emsg not needed";
 	stt = "\n/* options */";
 	stem = "Corrupt getoptionsBP.c, '/* options */' not found.";
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.c", bppart.from, bppart.to, "a");
-	// d) append the user's option processing.
+	sync();
+
+	// c.4) append the user's options help lines.
+	sft = "\n/* helptext */";
+	sfem = "Corrupt helpTXT.h, '/* helptext */' not found.";
+	stt = "\n/* usage */";
+	stem = "Corrupt helpTXT.h, '/* usage */' not found.";
+	bppart = bracketsearch(wfdat.from, wfdat.to, sft, sfem, stt, stem);
+	fdata hldat = fmthelplines(bppart.from, bppart.to, cols);
+	writefile("getoptions.c", hldat.from, hldat.to, "a");
+	free(hldat.from);
+	free(wfdat.from);
+
+	// d) append the top of the options while loop.
+	sft = "\n/* options */";
+	sfem = "Corrupt getoptionsBP.c, '/* options */' not found.";
+	stt = "\n/* useroptions */";
+	stem = "Corrupt getoptionsBP.c, '/* useroptions */' not found.";
+	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
+	writefile("getoptions.c", bppart.from, bppart.to, "a");
+
+	// e) append the user's option processing.
 	bppart = readfile("codeTXT.c", 0, 1);
 	writefile("getoptions.c", bppart.from, bppart.to, "a");
 	free(bppart.from);
+
 	// e) append the remainder of the BP file
-	sft = "\n/* options */";
+	sft = "\n/* useroptions */";
 	sfem = "no emesg";	// search string exists
 	stt = NULL;
 	stem = NULL;
@@ -564,18 +575,17 @@ fdata fmtusagelines(const char *progname, char *from, char *to)
 fdata fmthelplines(char *from, char *to, int cols)
 {	/*
 	 * formats each option and lines following like this:
-	 *  "\t-x[, --longx] Lorem ipsum dolor sit amet, consetetur \n"
-	 *  "\t              elitr, sed diam nonumyeirmod tempor invidunt\n"
-	 *  "\t              ut labore et dolore kimata sanctus est Lorem\n"
-	 *  "\t              ipsum dolor sit amet.Lorem ipsum dolor sit\n"
-	 *  "\t              amet, consete\n"
+	 *  "\t-x[, --longx]
+	 *  "\tLorem ipsum dolor sit amet, consetetur \n"
+	 *  "\telitr, sed diam nonumyeirmod tempor invidunt\n"
+	 *  "\tut labore et dolore kimata sanctus est Lorem\n"
+	 *  "\tipsum dolor sit amet.Lorem ipsum dolor sit\n"
+	 *  "\tamet, consete\n"
 	*/
 	char resbuf[PATH_MAX];
-	resbuf[0] = '\0';
 	size_t tabsize = 8;
 
 	// the scope of the search
-
 	resbuf[0] = '\0';	// will concatenate the options text here
 	fdata opthelp;
 	opthelp.from = from; 	// the starting point.
@@ -593,66 +603,41 @@ fdata fmthelplines(char *from, char *to, int cols)
 		char *optmess = malloc(opthelp.to - opthelp.from);
 		char *omend = optmess + (opthelp.to - opthelp.from);
 		memcpy(optmess, opthelp.from, opthelp.to - opthelp.from);
-		// now make C strings of this stuff.
-		char *cp = optmess;
+		/* First up, I will split off the actual option identifiers,
+		 * "-x", "-x, --longx", or "--longx" alone. I will put this on
+		 * it's own line. It is already separated by '\n'.
+		*/
+		char *eol = memchr(optmess, '\n', omend - optmess);
+		*eol = '\0';
+		char linebuf[NAME_MAX];
+		char *fmt = "  \"\\t%s\\n\"\n";
+		sprintf(linebuf, fmt, optmess);
+		strcat(resbuf, linebuf);
+		char *cp = eol + 1;
+		// turn cp into a C string.
+		*(omend -1) = '\0';
+		// make the rest of the mess into 1 long line.
 		while (cp < omend) {
-			if (*cp == '\n') *cp = '\0';
+			if (*cp == '\n') *cp = ' ';
 			cp++;
 		}
-		/*now process the the actual option name(s):
-		 * -<ch> || -<ch>, --<string> || --<string> */
-		cp = optmess;
-		char *ofmt = "  \"\\t%s\\n\"\n";
-		char line[NAME_MAX];
-		sprintf(line, ofmt, cp);
-		strcat(resbuf, line);
-		// format the actual help lines to suit available width.
-		// First gather all the help lines into 1 long line.
-		cp += strlen(cp) + 1;	// get past option name(s).
-		char longline[NAME_MAX + 8];
-		size_t lineidx = 0;
-		while (cp < omend) {
-			if (*cp == '\0') {
-				longline[lineidx] = ' ';
-			}  else {
-				longline[lineidx] = *cp;
-			}
-			cp++;
-			lineidx++;
-			if (lineidx >= NAME_MAX + 8) break;	// no buffer overflow
-		}
-		longline[lineidx] = '\0';
-		// set an arbitrary limit on the length of this stuff.
-		if (strlen(longline) > NAME_MAX) longline[NAME_MAX] = '\0';
-		// now break up this long line into pieces to suit the width.
+		// now split this text into pieces that fit.
 		size_t wid = cols - tabsize;
-		cp = longline;
-		char buf[NAME_MAX];
+		cp = eol + 1;
 		while (strlen(cp) > wid) {
-			char *limit = cp + strlen(cp);
-			char *target = cp + wid;
-			while(*target != ' ') target--;
-			*target = '\0';
-			// Excessive string lengths will silently dissapear.
-			if (strlen(resbuf) + strlen(cp) < PATH_MAX - 5) {
-				sprintf(buf, ofmt, cp);
-				strcat(resbuf, buf);
-			}
-			cp += strlen(cp) + 1;
-			if (cp > limit) break;
+			eol = cp + wid;
+			while (*eol != ' ') eol--;
+			*eol = '\0';
+			sprintf(linebuf, fmt, cp);
+			strcat(resbuf, linebuf);
+			cp = eol + 1;
 		}
 		if (strlen(cp)) {
-			if (strlen(resbuf) + strlen(cp) < PATH_MAX - 5) {
-				sprintf(buf, ofmt, cp);
-				strcat(resbuf, buf);
-			}
+			sprintf(linebuf, fmt, cp);
+			strcat(resbuf, linebuf);
 		}
 		free(optmess);
-		// next option if any
-		opthelp.from = memmem(opthelp.from, to - opthelp.from,
-								"\n-", 2);	/* look for eol followed by
-											 -something */
-		if (!opthelp.from) break;	// done
+		opthelp.from = opthelp.to;	// ready for next option if any.
 	}
 	fdata retdat;
 	size_t len = strlen(resbuf);
