@@ -23,12 +23,21 @@
 void process_options(int argc, char **argv)
 {
 /* defaults */
+
+/* helpmsg */
+  helpmsg =
+/* usage */
+  "\n\tOptions:\n"
+  "\t-h\n\toutputs this help message.\n"
+/* options */
+  ;
+
 	while((opt = getopt(argc, argv, optstring)) != -1) {
 		switch(opt){
 		case 'h':
 			dohelp(0);
 		break;
-/* options */
+/* useroptions */
 		case ':':
 			fprintf(stderr, "Option %c requires an argument\n"
 					,optopt);

@@ -33,15 +33,8 @@
 #include <libgen.h>
 
 int opt;
+char *helpmsg;
 /* declarations */
-
-/* helpmsg */
-char *helpmsg =
-/* usage */
-  "\n\tOptions:\n"
-  "\t-h\n\toutputs this help message.\n"
-/* options */
-  ;
 
 void dohelp(int forced);
 void process_options(int argc, char **argv);
