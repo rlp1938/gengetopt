@@ -1,0 +1,6 @@
+P=%s
+OBJECTS=%s.o getoptions.o
+CFLAGS = -g -Wall -Wextra -O0
+LDLIBS=
+CC=c99
+$(P): $(OBJECTS)

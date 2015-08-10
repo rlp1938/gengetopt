@@ -54,7 +54,7 @@ char *helpmsg = "\n\tUsage:  gengo [option] -i option_string\n"
   " the\n\t   left.\n\n"
   ;
 
-char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C;
+char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C, *MakefileBP_;
 
 
 static void dohelp(int forced);
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 	if (checkfirstrun(pn) == -1) {
 		fputs("firstrun\n", stdout);
 		firstrun(pn, "getoptionsBP.c", "getoptionsBP.h", "mainBP.c",
-					NULL);
+					"MakefileBP", NULL);
 	}
 
 	// name the boiler plate files.
@@ -98,6 +98,8 @@ int main(int argc, char **argv)
 		getoptionsBP_H = strdup(buf);
 		sprintf(buf, "%s/.config/%s/%s", home, pn, "mainBP.c");
 		mainBP_C = strdup(buf);
+		sprintf(buf, "%s/.config/%s/%s", home, pn, "MakefileBP");
+		MakefileBP_ = strdup(buf);
 	}
 	free(pn);
 
@@ -391,9 +393,10 @@ void getuserinput(const char *prompt, char *reply)
 
 void generatecode(const char *progname, int cols)
 {	/* Writes the files getoptions.h, getoptions.c and main.c
-	 * Source files are boilerplate, getoptionsBP.h, getoptionsBP.c
-	 * and mainBP.c located in $HOME/.config/genco/boilerplate/
-	 * and the the purpose written noargsTXT.c. helpTXT.h, codeTXT.c
+	 * Source files are boilerplate, getoptionsBP.h, getoptionsBP.c,
+	 * mainBP.c and MakefileBP located in
+	 * $HOME/.config/genco/boilerplate/
+	 * and the purpose written noargsTXT.c. helpTXT.h, codeTXT.c
 	 * declTXT.h and defltTXT.c
 	*/
 	// 1. generate main.c
@@ -527,6 +530,24 @@ void generatecode(const char *progname, int cols)
 	bppart = bracketsearch(bpdat.from, bpdat.to, sft, sfem, stt, stem);
 	writefile("getoptions.c", bppart.from, bppart.to, "a");
 	free(bpdat.from);
+
+	// 4. generate a minimal makefile.
+	// a) main.c must be renamed to <progname>.c or the brain dead
+	// makefile will fail to link the 2 object files.
+	char namebuf[NAME_MAX];
+	sprintf(namebuf, "%s.c", progname);
+	if (rename("main.c", namebuf) == -1) {
+		perror(namebuf);
+		exit(EXIT_FAILURE);
+	}
+	// b) don't clobber a Makefile that is there by some other means.
+	char *mf = "Makefile";
+	if (fileexists(mf) == 0) mf = "Makefile.gdb";
+	bpdat = readfile(MakefileBP_, 1, 1);	// extra byte for '\0'.
+	*(bpdat.to - 1) = '\0';	// bpdat.from now a C string.
+	// c) generate the makefile, the BP file is a format statement,
+	sprintf(namebuf, bpdat.from, progname, progname);
+	writefile(mf, namebuf, namebuf+ strlen(namebuf), "w");
 } // generatecode()
 
 void fatal(const char *msg)
