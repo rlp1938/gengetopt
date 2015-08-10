@@ -105,3 +105,11 @@ int direxists(const char *path)
 	if (S_ISDIR(sb.st_mode)) return 0;
 	return -1;
 } //direxists()
+
+int fileexists(const char *path)
+{	// crude check for existence of a file.
+	struct stat sb;
+	if (stat(path, &sb) == -1) return -1;
+	if (S_ISREG(sb.st_mode)) return 0;
+	return -1;
+} //fileexists()

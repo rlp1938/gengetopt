@@ -40,5 +40,5 @@ void writefile(const char *to_write, const char *from, const char *to,
 				const char *mode);
 FILE *dofopen(const char *fn, const char *fmode);
 int direxists(const char *path);
-
+int fileexists(const char *path);
 #endif
