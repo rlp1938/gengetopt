@@ -196,7 +196,7 @@ void getoptdata(char *useroptstring)
 	// Must initialise some stuff independently of user later input.
 	fputs("char *optstring;\n", fpdecl);
 	fprintf(fpdeflt, "\toptstring = \"%s\";\n", optstringout);
-	fputs("\n/* helptext */\n", fphelp);
+	fputs("\n/* helptext */\n\n", fphelp);
 
 	len = strlen(optstringout);
 
