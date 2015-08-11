@@ -7,5 +7,5 @@ gengo_SOURCES=gengo.c fileops.h fileops.c firstrun.h firstrun.c
 
 man_MANS=gengo.1
 getdir=$(datadir)/gengo
-get_DATA=getoptionsBP.c getoptionsBP.h mainBP.c
-EXTRA_BUILD=gengo.1 getoptionsBP.c getoptionsBP.h mainBP.c
+get_DATA=getoptionsBP.c getoptionsBP.h mainBP.c MakefileBP
+EXTRA_BUILD=gengo.1 getoptionsBP.c getoptionsBP.h mainBP.c MakefileBP
