@@ -1,3 +1,4 @@
+//<preamble>
 /*
  * getoptions.h
  * Copyright 2015 Bob Parker <rlp1938@gmail.com>
@@ -34,9 +35,13 @@
 
 int opt;
 char *helpmsg;
-/* declarations */
+char *optstr;
 
+/* user declarations */
+//</preamble>
+//<tail>
 void dohelp(int forced);
 void process_options(int argc, char **argv);
 
 #endif
+//</tail>

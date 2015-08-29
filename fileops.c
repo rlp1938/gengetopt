@@ -113,3 +113,57 @@ int fileexists(const char *path)
 	if (S_ISREG(sb.st_mode)) return 0;
 	return -1;
 } //fileexists()
+
+void doread(int fd, size_t bcount, char *result)
+{
+	char buf[PATH_MAX];
+	if (bcount > PATH_MAX) {
+		fprintf(stderr, "Requested size %li too big.\n", bcount);
+		exit(EXIT_FAILURE);
+	}
+	ssize_t res = read(fd, buf, bcount);
+	if (res == -1) {
+		perror(buf);
+		exit(EXIT_FAILURE);
+	}
+
+	strncpy(result, buf, res);
+	result[res] = '\0';
+} // doread()
+
+void dowrite(int fd, char *writebuf)
+{
+	ssize_t towrite = strlen(writebuf);
+	ssize_t written = write(fd, writebuf, towrite);
+	if (written != towrite) {
+		fprintf(stderr, "Expected to write %li bytes but wrote %li\n",
+				towrite, written);
+		exit(EXIT_FAILURE);
+	}
+} // dowrite()
+
+char getans(char *prompt, char *choices)
+{
+	/* Prompt the user with prompt then loop showing choices until
+	 * the user enters something contained in choices.
+	 * Alphabetic choices like "Yn" will be case insensitive.
+	*/
+	char readbuf[1];
+	char shortprompt[80];
+	dowrite(1, prompt);
+	sprintf(shortprompt, "Choose one of: \"%s\" ", choices);
+	while (1) {
+		dowrite(1, shortprompt);
+		doread(0, 1, readbuf);
+		readbuf[0] = toupper(readbuf[0]);
+		char *cp = choices;
+		while (*cp) {
+			if (toupper(*cp) == readbuf[0]) {
+				goto done;
+			}
+			cp++;
+		}
+	}
+done:
+	return readbuf[0];
+} // getans()
