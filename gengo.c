@@ -60,7 +60,6 @@ typedef struct tagpair {
 } tagpair;
 
 char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C, *MakefileBP_;
-int longopts;
 
 static void dohelp(int forced);
 static void getoptdata(char *useroptstring);
@@ -90,7 +89,7 @@ int main(int argc, char **argv)
 	int inter, gen, cols;
 
 	// defaults.
-	inter = longopts = gen = 0;
+	inter = gen = 0;
 	cols = 80;
 
 	char *pn = strdup(basename(argv[0]));
@@ -115,7 +114,7 @@ int main(int argc, char **argv)
 	}
 	free(pn);
 
-	while((opt = getopt(argc, argv, ":higc:s:u:d")) != -1) {
+	while((opt = getopt(argc, argv, ":higc:d")) != -1) {
 		switch(opt){
 		case 'h':
 			dohelp(0);
