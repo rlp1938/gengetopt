@@ -594,6 +594,7 @@ void generatecode(const char *progname, int cols)
 	boilerplateappend("getoptions.c", "glshortspost");
 	// c.10) complete the file
 	boilerplateappend("getoptions.c", "tail");
+	boilerplatedeinit();
 
 	// 4. generate a minimal makefile.
 	// a) main.c must be renamed to <progname>.c or my brain dead
