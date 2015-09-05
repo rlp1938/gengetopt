@@ -12,15 +12,13 @@ A program to generate code to process options for command line programs.
 
  There are a number of boilerplate files which on first run will be
  installed in $HOME/.config/gengo/. These files may be edited to suit
- but be aware that there are many C style comments eg /* comment */
+ but be aware that there are many comments like //<sometag>
  located at the beginning of lines. These are used at the generation
  stage so do not edit or remove these lines.
-
- BUGS: The man page mentions long options. This feature is not yet implemented but will be ASAP.
 
  The makefile generated is minimal and is really only suitable for a
  test build after program generation. If no 'Makefile' exists at program
  generation it will be so named, otherwise it is named 'Makefile.gdb'.
  makefile will be named "Makefile.gdb" so it won't clash with anything
- produced by autotools. It's entire purpose is to build the program
- with optimisation at level 0 for using gdb.
+ produced by autotools or any other means. It's entire purpose is to
+ build the program with optimisation at level 0 for using gdb.
