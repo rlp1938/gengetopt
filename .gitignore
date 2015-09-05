@@ -15,10 +15,6 @@
 /defltTXT.c
 /helpTXT.h
 /noargsTXT.c
-#next also, but generated at the code generate stage.
-/getoptions.c
-/getoptions.h
-/main.c
 #end of specials
 /install-sh
 /Makefile
