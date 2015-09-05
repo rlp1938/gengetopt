@@ -3,8 +3,10 @@
 AM_CFLAGS=-Wall -Wextra
 
 bin_PROGRAMS=gengo
-gengo_SOURCES=gengo.c fileops.h fileops.c firstrun.h firstrun.c
+gengo_SOURCES=gengo.c fileops.h fileops.c firstrun.h firstrun.c \
+getoptions.h getoptions.c
 
+gengo_LDADD=-lreadline
 man_MANS=gengo.1
 getdir=$(datadir)/gengo
 get_DATA=getoptionsBP.c getoptionsBP.h mainBP.c MakefileBP
