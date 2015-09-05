@@ -1,4 +1,4 @@
-.TH "gengo" 1 "2015-08-11" "Linux Command"
+.TH "gengo" 1 "2015-09-05" "Linux Command"
 
 
 .SH NAME
@@ -23,9 +23,11 @@ user provided option string and generates
 workable \fImain.c\fR in accordance with the answers given.
 
 .P
-The options string output will begin with ":h". You may
-preface your provided options string with this or not as you
-wish. If not provided the program will do it.
+The options string output will begin with ":h".
+Please make no reference short option h or long option help as
+processing for this option is built into the program.
+If want to change the wording given for the help option, edit
+\fI$HOME.config/gengo/getoptionsBP.c\fR
 
 .P
 `make` followed by `./program_name \-h` should get you the
@@ -33,44 +35,47 @@ help listing before you add anything to your new program.
 
 .P
 On first run the following files will be written to
-\fI$HOME/.config/gengo/; //main.bp\fR, \fImainhdr.bp\fR,
-\fIgetoptions.bp\fR, \fIMakefileBP\fR and \fIgetoptions.bp\fR.
+\fI$HOME/.config/gengo/; //mainBP.c\fR, \fIgetoptionsBP.c\fR, \fIMakefileBP\fR
+ and \fIgetoptioBP.h\fR.
 You may edit these files as required. However, be aware that there are
-many old C style comments on new lines within these files that are used
-as targets during processing. These should be left alone.
+many comments of the form \fI//<sometag>\fR on new lines within these
+files  that are used as targets during processing.
+These should be left alone.
 
 .SH OPTIONS
 
 .TP
- \fB\-h\fR
+ \fB\-h, \-\-help\fR
 print help information and exit.
 
 .TP
- \fB\-i\fR
+ **d, \-\-delete
+Delete any workfiles found in the current directory.
+
+.TP
+ \fB\-i, \-\-interactive\fR
 generate intermediate files from the user's answers to
 questions about the options.
 
-The files are \fIhelptext.txt\fR, \fIdeclare.txt\fR, \fIdefault.txt\fR
-and \fIcode.txt\fR. These files will be written in the current dir.
+The files are \fIhelpTXT.c\fR, \fIdeclTXT.h\fR, \fIdefltTXT.c\fR,
+\fIsocodeTXT.c\fR, \fIlocodeTXT.c\fR, \fIlostructTXT.c\fR and \fInoargsTXT.c\fR.
+These files will be written in the current dir.
 
 .TP
- \fB\-l\fR
-ask for long option names and generate code to process them. This is
-meaningful only with \-i option. Presently this is a lie, I'll implement
-this ASAP.
-
-.TP
- \fB\-g\fR
+ \fB\-g, generate\fR
 generate the \fImain.c\fR, \fIgetoptions.c\fR and
 \fIgetoptions.h\fR. from the above named txt files. Generate
 a \fIMakefile\fR to make \fIprogram_name\fR.
 
-The next options are only meaningful when using \-g option.
+The next option is only meaningful when using \-g option.
 
 .TP
- \fB\-c\fR
+ \fB\-c, \-\-columns\fR
 number of columns in display. Default is 80 columns.
+If altered the columns should be in range 72..132. If outside the value
+will be altered to bring it into range.
 
+.P
 By making this a 2 stage process, the user has the
 opportunity to edit the text files if required before
 program generation.

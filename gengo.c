@@ -135,12 +135,8 @@ void getoptdata(char *useroptstring)
 
 	optstringout = malloc(len + 3);	// user input leading ":h" or not.
 
-	if (strncmp(":h", useroptstring, 2) == 0) {
-		strcpy(optstringout, useroptstring);
-	} else {
-		strcpy(optstringout, ":h");
-		strcat(optstringout, useroptstring);
-	}
+	strcpy(optstringout, ":h");
+	strcat(optstringout, useroptstring);
 
 	// open work files, next 4 always wanted
 	FILE *fphelp = dofopen("helpTXT.c", "w");
