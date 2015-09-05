@@ -29,43 +29,30 @@
 #include <limits.h>
 #include <linux/limits.h>
 #include <libgen.h>
+#include <fcntl.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "fileops.h"
 #include "firstrun.h"
+#include "getoptions.h"
 
 void *memmem(const void *haystack, size_t haystacklen,
                     const void *needle, size_t needlelen);
 
-char *helpmsg = "\n\tUsage:  gengo [option] -i option_string\n"
-  "\t\tgengo [option] -g program_name\n"
-  "\n\tOptions:\n"
-  "\t-h outputs this help message.\n\n"
-  "\t-i generate intermediate files from the user's answers to "
-  "questions\n\t   about the options.\n\n"
-  "\t-l ask for long option names and generate code to process them.\n"
-  "\t   This is meaningful only with -i option.\n\n"
-  "\t-g generate the main.c, getoptions.c and getoptions.h from the\n"
-  "\t    above named txt files. Generate a Makefile to make"
-  " program_name.\n"
-  "\tThe next options are meaningful only with the -g option\n\n"
-  "\t-c number of columns in display. Default is 80 columns.\n\n"
-  "\t-s starting column for help text. Default is 12, ie 12 spaces"
-  " from the \n\t   left.\n\n"
-  "\t-u starting column for usage text. Default is 16, ie 2 tabs from"
-  " the\n\t   left.\n\n"
-  ;
 
 typedef struct tagpair {
 	char *opntag;
 	char *clstag;
 } tagpair;
 
+int ioflag;
+
 char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C, *MakefileBP_;
 
-static void dohelp(int forced);
 static void getoptdata(char *useroptstring);
 static void getmultilines(char *multi, char *display, unsigned maxlen,
 			int wanteol);
-static void getuserinput(const char *prompt, char *reply);
+static void getuserinput(char *prompt, char *reply);
 static void generatecode(const char *progname, int cols);
 static void fatal(const char *msg);
 static fdata fmtusagelines(const char *progname, char *from, char *to);
@@ -83,14 +70,7 @@ static void appenduserfile(const char *userfilename,
 
 int main(int argc, char **argv)
 {
-	int opt;
-
-	// declare option flags, vars.
-	int inter, gen, cols;
-
-	// defaults.
-	inter = gen = 0;
-	cols = 80;
+	process_options(argc, argv);
 
 	char *pn = strdup(basename(argv[0]));
 	if (checkfirstrun(pn) == -1) {
@@ -113,45 +93,6 @@ int main(int argc, char **argv)
 		MakefileBP_ = strdup(buf);
 	}
 	free(pn);
-
-	while((opt = getopt(argc, argv, ":higc:d")) != -1) {
-		switch(opt){
-		case 'h':
-			dohelp(0);
-		break;
-		case 'd':	// delete workfiles
-			if (fileexists("helpTXT.c") == 0) unlink("helpTXT.c");
-			if (fileexists("usageTXT.c") == 0) unlink("usageTXT.c");
-			if (fileexists("declTXT.h") == 0) unlink("declTXT.h");
-			if (fileexists("defltTXT.c") == 0) unlink("defltTXT.c");
-			if (fileexists("socodeTXT.c") == 0) unlink("socodeTXT.c");
-			if (fileexists("locodeTXT.c") == 0) unlink("locodeTXT.c");
-			if (fileexists("lostructTXT.c") == 0)
-					unlink("lostructTXT.c");
-			if (fileexists("noargsTXT.c") == 0) unlink("noargsTXT.c");
-			exit(EXIT_SUCCESS);
-		break;
-		case 'i': // intermediate files to be written.
-			inter = 1;
-		break;
-		case 'g': // generate program files from intermediates.
-			gen = 1;
-		break;
-		case 'c': // display columns.
-			cols = strtol(optarg, NULL, 10);
-			if (cols < 72) cols = 72;
-			if (cols > 132) cols = 132;
-		break;
-		case ':':
-			fprintf(stderr, "Option %c requires an argument\n",optopt);
-			dohelp(1);
-		break;
-		case '?':
-			fprintf(stderr, "Unknown option: %c\n",optopt);
-			dohelp(1);
-		break;
-		} //switch()
-	}//while()
 
 	// make sure that I have set inter or gen but not both.
 	if ((inter == 0 && gen == 0) || (inter == 1 && gen == 1)) {
@@ -184,12 +125,6 @@ int main(int argc, char **argv)
 	return 0;
 }//main()
 
-void dohelp(int forced)
-{
-  fputs(helpmsg, stderr);
-  exit(forced);
-}
-
 void getoptdata(char *useroptstring)
 {
 	/* Creates work files from users provided data.*/
@@ -217,11 +152,7 @@ void getoptdata(char *useroptstring)
 	FILE *fplocode = NULL;
 	FILE *fplostruct = NULL;
 	FILE *fpdecl = NULL;
-	/*
-	FILE *fpsocode = dofopen("socodeTXT.c", "w");
-	FILE *fplocode = dofopen("locodeTXT.c", "w");
-	FILE *fplostruct = dofopen("lostructTXT.c", "w");
-	*/
+
 	// Must initialise some stuff independently of user later input.
 	fprintf(fpdeflt, "\toptstr = \"%s\";\n", optstringout);
 	fputs("\n/* helptext */\n\n", fphelp);
@@ -232,8 +163,8 @@ void getoptdata(char *useroptstring)
 					{"help", 0, 0, 'h'}, */
 	// formats
 	char *declfmt = "%s %s;\n";
-	char *defltfmt = "\t%s = %s;";
-	char *codefmt = "\t\tcase\'%c\':\n\t\t\t%s;\n\t\t\tbreak;\n";
+	char *defltfmt = "\t%s = %s;\n";
+	char *codefmt = "\t\tcase \'%c\':\n\t\t\t%s %s;\n\t\t\tbreak;\n";
 	// result buffers
 	char namebuf[NAME_MAX];
 	char typebuf[NAME_MAX];
@@ -272,8 +203,8 @@ void getoptdata(char *useroptstring)
 				getuserinput("Enter variable default value: ",
 								defltbuf);
 				// Option C code.
-				getuserinput("Begining with an assignment operator,\n"
-							"enter C code for this option: ",
+				getuserinput("Begining with an assignment operator,"
+							"enter C code for this option:\n ",
 							codebuf);
 				break;
 			case '2':
@@ -288,15 +219,15 @@ void getoptdata(char *useroptstring)
 				break;
 			case '3':
 				// Option variable name.
-				sprintf(namebuf, "/* Enter your variable(s) types "
-				"and name(s) for option %c here.*/", c);
+				sprintf(namebuf, "/* FIXME Enter your variable(s) types"
+				" and name(s) for option %c here.*/", c);
 				// Option variable type.
 				typebuf[0] = '\0';
 				// Option default value.
-				sprintf(defltbuf, "/*Assign the variable(s) for option"
-				" %c here.*/", c);
+				sprintf(defltbuf, "/* FIXME Assign the variable(s) for"
+				" option %c here.*/", c);
 				// Option C code.
-				strcpy(codebuf, "/*Enter C code for variable(s) "
+				strcpy(codebuf, "/* FIXME Enter C code for variable(s) "
 				"used by option here.*/");
 				break;
 			}
@@ -307,12 +238,13 @@ void getoptdata(char *useroptstring)
 						"Enter long option name or <return> for none:",
 							loname);
 			if (strlen(loname)) {
-				if (!fplostruct) dofopen("lostructTXT.c", "w");
+				if (!fplostruct)
+					fplostruct = dofopen("lostructTXT.c", "w");
 				// I can set up and write the long options struct
 				char losbuf[NAME_MAX];
 				int rqd = (idx+1 < len && optstringout[idx+1] == ':')
 							? 1 : 0;
-				sprintf(losbuf, "\t\t{\"%s\",\t%d,\t0,\t\'%c\'},\n",
+				sprintf(losbuf, "\t\t\t{\"%s\",\t%d,\t0,\t\'%c\'},\n",
 						loname, rqd, c);
 				fputs(losbuf, fplostruct);
 				// how the options will display
@@ -329,12 +261,15 @@ void getoptdata(char *useroptstring)
 
 		// write other workfiles
 		// declaration
+		char tmpbuf[NAME_MAX];
 		if (!fpdecl) fpdecl = dofopen("declTXT.h", "w");
 		fprintf(fpdecl, declfmt, typebuf, namebuf);
 		// set default value
 		fprintf(fpdeflt, defltfmt, namebuf, defltbuf);
 		// C code when selected
-		fprintf(fpsocode, codefmt, c, namebuf, codebuf);
+		sprintf(tmpbuf, codefmt, c, namebuf, codebuf);
+		fputs(tmpbuf, fpsocode);
+		//fprintf(fpsocode, codefmt, c, namebuf, codebuf);
 	} // for(idx ...)
 
 	// Check for any long options not paired with short ones.
@@ -502,16 +437,18 @@ void getmultilines(char *multi, char *display, unsigned maxlen,
 	strcpy(multi, result);
 } // getmultilines()
 
-void getuserinput(const char *prompt, char *reply)
+void getuserinput(char *prompt, char *reply)
 {	/* This routine does avoid the utterly unwanted optimisations that
 	 * get the requests and replies in all the wrong order.
 	 * That is when using fgets/fputs.
+	 * Actually the above was true for some months but from late
+	 * August 2015 some lunatic has managed to fubar read() and write()
+	 * and create the same problems as fgets() and fputs().
 	*/
 	char buf[NAME_MAX];
-	sprintf(buf, "%s", prompt);
-	dowrite(1, buf);
-	doread(0, NAME_MAX, buf);
-	char *cp = strchr(buf, '\n');
+	fputs(prompt, stdout);
+	char *cp = fgets(buf, NAME_MAX, stdin);
+	cp = strchr(buf, '\n');
 	if (cp) *cp = '\0';
 	strcpy(reply, buf);
 } // getuserinput()
@@ -538,7 +475,7 @@ void generatecode(const char *progname, int cols)
 	// a) write the preamble.
 	boilerplateinit(getoptionsBP_H, "getoptions.h", "preamble");
 	// b) append the user's variable declarations.
-	appenduserfile("declTXT.", "getoptions.h");
+	appenduserfile("declTXT.h", "getoptions.h");
 	// c) append the tail end of the BP file.
 	boilerplateappend("getoptions.h", "tail");
 	boilerplatedeinit();

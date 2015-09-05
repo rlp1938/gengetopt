@@ -142,28 +142,35 @@ void dowrite(int fd, char *writebuf)
 	}
 } // dowrite()
 
-char getans(char *prompt, char *choices)
+int getans(char *prompt, char *choices)
 {
 	/* Prompt the user with prompt then loop showing choices until
 	 * the user enters something contained in choices.
 	 * Alphabetic choices like "Yn" will be case insensitive.
 	*/
-	char readbuf[1];
-	char shortprompt[80];
-	dowrite(1, prompt);
-	sprintf(shortprompt, "Choose one of: \"%s\" ", choices);
-	while (1) {
-		dowrite(1, shortprompt);
-		doread(0, 1, readbuf);
-		readbuf[0] = toupper(readbuf[0]);
-		char *cp = choices;
-		while (*cp) {
-			if (toupper(*cp) == readbuf[0]) {
-				goto done;
-			}
-			cp++;
-		}
+
+	char c;
+	char buf[10];
+	char promptbuf[NAME_MAX];
+	char ucchoices[NAME_MAX];
+	memset(ucchoices, 0, NAME_MAX);
+	size_t l = strlen(choices);
+	size_t i;
+	for (i = 0; i < l; i++) {
+		ucchoices[i] = choices[i];
 	}
-done:
-	return readbuf[0];
+	fputs(prompt, stdout);
+	sprintf(promptbuf, "Enter one of [%s] :", choices);
+	while (1) {
+		fputs(promptbuf, stdout);
+		char *cp = fgets(buf, 10, stdin);
+		if (!cp) {
+			perror("fgets");
+			exit(EXIT_FAILURE);
+		}
+
+		c = toupper(buf[0]);
+		if (strchr(choices, c)) break;
+	}
+	return c;
 } // getans()

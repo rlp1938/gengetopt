@@ -585,7 +585,7 @@ PACKAGE_STRING='gengo 1.0'
 PACKAGE_BUGREPORT='rlp1938@gmail.com'
 PACKAGE_URL=''
 
-ac_unique_file="noargsTXT.c"
+ac_unique_file="gengo.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
@@ -4280,6 +4280,17 @@ else
 
 cat >>confdefs.h <<_ACEOF
 #define size_t unsigned int
+_ACEOF
+
+fi
+
+ac_fn_c_check_type "$LINENO" "ssize_t" "ac_cv_type_ssize_t" "$ac_includes_default"
+if test "x$ac_cv_type_ssize_t" = xyes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define ssize_t int
 _ACEOF
 
 fi

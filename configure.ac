@@ -4,7 +4,7 @@
 AC_PREREQ([2.69])
 AC_INIT([gengo], [1.0], [rlp1938@gmail.com])
 AM_INIT_AUTOMAKE
-AC_CONFIG_SRCDIR([noargsTXT.c])
+AC_CONFIG_SRCDIR([gengo.c])
 AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
@@ -18,6 +18,7 @@ AC_CHECK_HEADERS([limits.h stdlib.h string.h unistd.h fcntl.h])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC
