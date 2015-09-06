@@ -22,3 +22,6 @@ A program to generate code to process options for command line programs.
  makefile will be named "Makefile.gdb" so it won't clash with anything
  produced by autotools or any other means. It's entire purpose is to
  build the program with optimisation at level 0 for using gdb.
+
+ You will need to install the readline libraries by whatever means your
+ system uses.
