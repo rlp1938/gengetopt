@@ -434,19 +434,17 @@ void getmultilines(char *multi, char *display, unsigned maxlen,
 } // getmultilines()
 
 void getuserinput(char *prompt, char *reply)
-{	/* This routine does avoid the utterly unwanted optimisations that
-	 * get the requests and replies in all the wrong order.
-	 * That is when using fgets/fputs.
-	 * Actually the above was true for some months but from late
-	 * August 2015 some lunatic has managed to fubar read() and write()
-	 * and create the same problems as fgets() and fputs().
-	*/
-	char buf[NAME_MAX];
+{
+/*	char buf[NAME_MAX];
 	fputs(prompt, stdout);
 	char *cp = fgets(buf, NAME_MAX, stdin);
 	cp = strchr(buf, '\n');
 	if (cp) *cp = '\0';
 	strcpy(reply, buf);
+	*/
+	char *buf = readline(prompt);
+	strcpy(reply, buf);
+	free(buf);
 } // getuserinput()
 
 void generatecode(const char *progname, int cols)
