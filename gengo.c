@@ -66,7 +66,7 @@ static void appenduserfile(const char *userfilename,
 
 int main(int argc, char **argv)
 {
-	process_options(argc, argv);
+	options_t opts = process_options(argc, argv);
 
 	char *pn = strdup(basename(argv[0]));
 	if (checkfirstrun(pn) == -1) {
@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 	free(pn);
 
 	// make sure that I have set inter or gen but not both.
-	if ((inter == 0 && gen == 0) || (inter == 1 && gen == 1)) {
+	if ((opts.inter == 0 && opts.gen == 0) || (opts.inter == 1 && opts.gen == 1)) {
 		fprintf(stderr,
 		"\tYou must select -i or -g option but not both.\n");
 		dohelp(EXIT_FAILURE);
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 
 	// now process the non-option argument which must exist.
 
-	if (inter == 1) {	// gathering options data
+	if (opts.inter == 1) {	// gathering options data
 		if (!argv[optind]) {
 			fputs("No options string provided.\n", stderr);
 			dohelp(EXIT_FAILURE);
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 			dohelp(EXIT_FAILURE);
 		}
 		char *progname = strdup(argv[optind]);
-		generatecode(progname, cols);
+		generatecode(progname, opts.cols);
 		free(progname);
 	}
 
