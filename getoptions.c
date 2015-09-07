@@ -21,34 +21,37 @@
 #include "getoptions.h"
 #include "fileops.h"
 
-void process_options(int argc, char **argv)
+static const char helpmsg[] =
+"\tUsage: gengo \n"
+
+"\n\tOptions:\n"
+"\t-h, --help\n\tDisplays this help message, then quits.\n"
+"\t-i, --interactive\n"
+"\tgenerate intermediate files from the user's answers to questions"
+" about\n\tthe options. \n"
+"\t-g, --generate\n"
+"\tgenerate the main.c, getoptions.c and getoptions.h from the\n "
+"\tintermediate text files. "
+"\t  Generate a Makefile to make program_name. \n"
+"\t-c, --columns\n"
+"\tnumber of columns in display. Default is 80 columns. Number input"
+" must\n"
+"\tbe in range 72..132. If outside range the number will be adjusted"
+" to the\n"
+"\tsmaller or larger number of this range. \n"
+"\t-d, --delete\n"
+"\tdeletes any workfiles found in the current directory. \n"
+;
+
+
+options_t
+process_options(int argc, char **argv)
 {
+	static const char optstr[] = ":higc:d";
 
-  helpmsg =
-  "\tUsage: gengo \n"
+	options_t opts = { 0 };
+	opts.cols = 80;
 
-  "\n\tOptions:\n"
-  "\t-h, --help\n\tDisplays this help message, then quits.\n"
-  "\t-i, --interactive\n"
-  "\tgenerate intermediate files from the user's answers to questions"
-  " about\n\tthe options. \n"
-  "\t-g, --generate\n"
-  "\tgenerate the main.c, getoptions.c and getoptions.h from the\n "
-  "\tintermediate text files. "
-  "\t  Generate a Makefile to make program_name. \n"
-  "\t-c, --columns\n"
-  "\tnumber of columns in display. Default is 80 columns. Number input"
-  " must\n"
-  "\tbe in range 72..132. If outside range the number will be adjusted"
-  " to the\n"
-  "\tsmaller or larger number of this range. \n"
-  "\t-d, --delete\n"
-  "\tdeletes any workfiles found in the current directory. \n"
-  ;
-	optstr = ":higc:d";
-	inter = 0;
-	gen = 0;
-	cols = 80;
 	while (1) {
 		int this_option_optind = optind ? optind : 1;
 		int option_index = 0;
@@ -61,7 +64,7 @@ void process_options(int argc, char **argv)
 			{0,	0,	0,	0 }
 		};
 
-		opt = getopt_long(argc, argv, optstr, long_options,
+		int opt = getopt_long(argc, argv, optstr, long_options,
 							&option_index);
 		if (opt == -1)
 			break;
@@ -74,13 +77,13 @@ void process_options(int argc, char **argv)
 				dohelp(0);
 				break;
 		case 'i':
-			inter = 1;
+			opts.inter = 1;
 			break;
 		case 'g':
-			gen = 1;
+			opts.gen = 1;
 			break;
 		case 'c':
-			cols = strtol(optarg, NULL, 10);
+			opts.cols = strtol(optarg, NULL, 10);
 			break;
 		case 'd':
 			if (fileexists("helpTXT.c") == 0) unlink("helpTXT.c");
@@ -107,6 +110,8 @@ void process_options(int argc, char **argv)
 		}
 
 	} // while(1)
+
+	return opts;
 } // process_options()
 
 void dohelp(int forced)

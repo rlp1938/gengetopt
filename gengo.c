@@ -36,10 +36,6 @@
 #include "firstrun.h"
 #include "getoptions.h"
 
-void *memmem(const void *haystack, size_t haystacklen,
-                    const void *needle, size_t needlelen);
-
-
 typedef struct tagpair {
 	char *opntag;
 	char *clstag;
@@ -50,9 +46,9 @@ int ioflag;
 char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C, *MakefileBP_;
 
 static void getoptdata(char *useroptstring);
-static void getmultilines(char *multi, char *display, unsigned maxlen,
+static void getmultilines(char *multi, const char *display, unsigned maxlen,
 			int wanteol);
-static void getuserinput(char *prompt, char *reply);
+static void getuserinput(const char *prompt, char *reply);
 static void generatecode(const char *progname, int cols);
 static void fatal(const char *msg);
 static fdata fmtusagelines(const char *progname, char *from, char *to);
@@ -70,7 +66,7 @@ static void appenduserfile(const char *userfilename,
 
 int main(int argc, char **argv)
 {
-	process_options(argc, argv);
+	options_t opts = process_options(argc, argv);
 
 	char *pn = strdup(basename(argv[0]));
 	if (checkfirstrun(pn) == -1) {
@@ -95,7 +91,7 @@ int main(int argc, char **argv)
 	free(pn);
 
 	// make sure that I have set inter or gen but not both.
-	if ((inter == 0 && gen == 0) || (inter == 1 && gen == 1)) {
+	if ((opts.inter == 0 && opts.gen == 0) || (opts.inter == 1 && opts.gen == 1)) {
 		fprintf(stderr,
 		"\tYou must select -i or -g option but not both.\n");
 		dohelp(EXIT_FAILURE);
@@ -103,7 +99,7 @@ int main(int argc, char **argv)
 
 	// now process the non-option argument which must exist.
 
-	if (inter == 1) {	// gathering options data
+	if (opts.inter == 1) {	// gathering options data
 		if (!argv[optind]) {
 			fputs("No options string provided.\n", stderr);
 			dohelp(EXIT_FAILURE);
@@ -115,7 +111,7 @@ int main(int argc, char **argv)
 			dohelp(EXIT_FAILURE);
 		}
 		char *progname = strdup(argv[optind]);
-		generatecode(progname, cols);
+		generatecode(progname, opts.cols);
 		free(progname);
 	}
 
@@ -353,8 +349,8 @@ void getoptdata(char *useroptstring)
 	/* the literal "progname" will be replaced by the actual program
 	 * name at program generation time. This name is not known now. */
 	fputs("progname ", fpusage);
-	char *prompt = "usage text";
-	getmultilines(usagebuf, prompt, NAME_MAX, 1);
+	const char *usage_prompt = "usage text";
+	getmultilines(usagebuf, usage_prompt, NAME_MAX, 1);
 	fputs(usagebuf, fpusage);
 	fputs("\n", fpusage);	// empty line marks end of usage lines.
 
@@ -371,8 +367,8 @@ void getoptdata(char *useroptstring)
 	// non-option arguments.
 	fputs(eols, stdout);
 	char noabuf[NAME_MAX];
-	prompt = "how many non-option arguments are to be input, 0..n? ";
-	getuserinput(prompt, noabuf);
+	const char *number_prompt = "how many non-option arguments are to be input, 0..n? ";
+	getuserinput(number_prompt, noabuf);
 	int noargs = strtol(noabuf, NULL, 10);
 	if (noargs == 0) return;	// done
 	FILE *fpnoarg = fopen("noargsTXT.c", "w");
@@ -381,9 +377,9 @@ void getoptdata(char *useroptstring)
 	for (i=0; i < noargs; i++) {
 		// Does the argv[optind] exist?
 		fputs("\tif(!argv[optind]) {\n", fpnoarg);
-		char * prompt = "What kind of object is required?\n"
+		const char * kind_prompt = "What kind of object is required?\n"
 			"Dir(1), File(2), String(3) or something else(4)\n";
-		char ansno = getans(prompt, "1234");
+		char ansno = getans(kind_prompt, "1234");
 		char *rqd[] = {
 			"dir",
 			"file",
@@ -401,7 +397,7 @@ void getoptdata(char *useroptstring)
 	fclose(fpnoarg);
 } // getoptdata()
 
-void getmultilines(char *multi, char *display, unsigned maxlen,
+void getmultilines(char *multi, const char *display, unsigned maxlen,
 					int wanteol)
 {	/* Inform user using text at display and return many lines '\n'
 	separated in multi. */
@@ -433,7 +429,7 @@ void getmultilines(char *multi, char *display, unsigned maxlen,
 	strcpy(multi, result);
 } // getmultilines()
 
-void getuserinput(char *prompt, char *reply)
+void getuserinput(const char *prompt, char *reply)
 {
 /*	char buf[NAME_MAX];
 	fputs(prompt, stdout);

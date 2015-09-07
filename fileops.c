@@ -142,7 +142,7 @@ void dowrite(int fd, char *writebuf)
 	}
 } // dowrite()
 
-int getans(char *prompt, char *choices)
+int getans(const char *prompt, const char *choices)
 {
 	/* Prompt the user with prompt then loop showing choices until
 	 * the user enters something contained in choices.
