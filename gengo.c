@@ -46,8 +46,8 @@ int ioflag;
 char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C, *MakefileBP_;
 
 static void getoptdata(char *useroptstring);
-static void getmultilines(char *multi, const char *display, unsigned maxlen,
-			int wanteol);
+static void getmultilines(char *multi, const char *display,
+							unsigned maxlen, int wanteol);
 static void getuserinput(const char *prompt, char *reply);
 static void generatecode(const char *progname, int cols);
 static void fatal(const char *msg);
@@ -128,26 +128,29 @@ void getoptdata(char *useroptstring)
 	size_t len = strlen(useroptstring);
 	unsigned idx;
 	char *eols = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
-
-	optstringout = malloc(len + 3);	// user input leading ":h" or not.
+	int havefixme = 0;
+	optstringout = malloc(len + 3);
 
 	strcpy(optstringout, ":h");
 	strcat(optstringout, useroptstring);
 
-	// open work files, next 4 always wanted
+	// open work files, next 3 always wanted
 	FILE *fphelp = dofopen("helpTXT.c", "w");
 	FILE *fpusage = dofopen("usageTXT.c", "w");
 	FILE *fpdeflt = dofopen("defltTXT.c", "w");
 
-	// next 3 work files opended conditionally
+	// next 4 work files opended conditionally
 	FILE *fpsocode = NULL;
 	FILE *fplocode = NULL;
 	FILE *fplostruct = NULL;
 	FILE *fpdecl = NULL;
 
 	// Must initialise some stuff independently of user later input.
-	fprintf(fpdeflt, "\toptstr = \"%s\";\n", optstringout);
+	fprintf(fpdeflt, "\tstatic const char optstr[] = \"%s\";\n\n",
+				optstringout);
+	fputs("\toptions_t opts = { 0 };\n", fpdeflt);
 	fputs("\n/* helptext */\n\n", fphelp);
+
 
 	len = strlen(optstringout);
 
@@ -155,8 +158,9 @@ void getoptdata(char *useroptstring)
 					{"help", 0, 0, 'h'}, */
 	// formats
 	char *declfmt = "%s %s;\n";
-	char *defltfmt = "\t%s = %s;\n";
-	char *codefmt = "\t\tcase \'%c\':\n\t\t\t%s %s;\n\t\t\tbreak;\n";
+	char *defltfmt = "\topts.%s = %s;\n";
+	char *codefmt =
+			"\t\t\tcase \'%c\':\n\t\t\t\topts.%s %s;\n\t\t\t\tbreak;\n";
 	// result buffers
 	char namebuf[NAME_MAX];
 	char typebuf[NAME_MAX];
@@ -210,6 +214,7 @@ void getoptdata(char *useroptstring)
 				strcpy(codebuf, "= strdup(optarg)");
 				break;
 			case '3':
+				havefixme = 1;
 				// Option variable name.
 				sprintf(namebuf, "/* FIXME Enter your variable(s) types"
 				" and name(s) for option %c here.*/", c);
@@ -256,12 +261,21 @@ void getoptdata(char *useroptstring)
 		char tmpbuf[NAME_MAX];
 		if (!fpdecl) fpdecl = dofopen("declTXT.h", "w");
 		fprintf(fpdecl, declfmt, typebuf, namebuf);
-		// set default value
-		fprintf(fpdeflt, defltfmt, namebuf, defltbuf);
+		/* Set default value, conditionally.
+		 * By default every object in the options_t struct is 0 | NULL
+		 * so only explicitly set each object if it's value is
+		 * something else.
+		 * TODO make sure that this works for doubles as well as ints
+		 * and char *.
+		*/
+		char *isnull = strstr(defltbuf, "NULL");
+		int iszero = ((strlen(defltbuf) == 1) &&
+						(strchr(defltbuf, '0')));
+		if (!(iszero || isnull)) {
+			fprintf(fpdeflt, defltfmt, namebuf, defltbuf);
+		}
 		// C code when selected
-		sprintf(tmpbuf, codefmt, c, namebuf, codebuf);
-		fputs(tmpbuf, fpsocode);
-		//fprintf(fpsocode, codefmt, c, namebuf, codebuf);
+		fprintf(fpsocode, codefmt, c, namebuf, codebuf);
 	} // for(idx ...)
 
 	// Check for any long options not paired with short ones.
@@ -317,16 +331,17 @@ void getoptdata(char *useroptstring)
 				strcpy(codebuf, "= strdup(optarg)");
 				break;
 			case '3':
+				havefixme = 1;
 				// Option variable name.
-				sprintf(namebuf, "/* Enter your variable(s) types "
-				"and name(s) for option %s here.*/", loname);
+				sprintf(namebuf, "/* FIXME Enter your variable(s) "
+				"types and name(s) for option %s here.*/", loname);
 				// Option variable type.
 				typebuf[0] = '\0';
 				// Option default value.
-				sprintf(defltbuf, "/*Assign the variable(s) for option"
-				" %s here.*/", loname);
+				sprintf(defltbuf, "/*FIXME Assign the variable(s) for"
+				" option %s here.*/", loname);
 				// Option C code.
-				strcpy(codebuf, "/*Enter C code for variable(s) "
+				strcpy(codebuf, "/*FIXME Enter C code for variable(s) "
 				"used by option here.*/");
 				break;
 		} // switch(ans)
@@ -395,6 +410,14 @@ void getoptdata(char *useroptstring)
 		fputs("\toptind++;\n", fpnoarg);
 	}
 	fclose(fpnoarg);
+	if (havefixme) {
+		char *advice =
+		"You have opted to enter some data into intermediate files.\n"
+		"grep FIXME *TXT* and edit the listed files before generating C"
+		" code.\n";
+		fputs(advice, stderr);
+	}
+
 } // getoptdata()
 
 void getmultilines(char *multi, const char *display, unsigned maxlen,
@@ -431,13 +454,6 @@ void getmultilines(char *multi, const char *display, unsigned maxlen,
 
 void getuserinput(const char *prompt, char *reply)
 {
-/*	char buf[NAME_MAX];
-	fputs(prompt, stdout);
-	char *cp = fgets(buf, NAME_MAX, stdin);
-	cp = strchr(buf, '\n');
-	if (cp) *cp = '\0';
-	strcpy(reply, buf);
-	*/
 	char *buf = readline(prompt);
 	strcpy(reply, buf);
 	free(buf);

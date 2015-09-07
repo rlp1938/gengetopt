@@ -21,10 +21,7 @@
 
 #include "getoptions.h"
 
-void process_options(int argc, char **argv)
-{
-
-  helpmsg =
+static const char helpmsg[] =
 //</preamble>
 //<fixedoptions>
   "\n\tOptions:\n"
@@ -33,8 +30,16 @@ void process_options(int argc, char **argv)
 
 //<endoptions>
   ;
+
+options_t
+process_options(int argc, char **argv)
+{
+
 //</endoptions>
 //<golongwshortpre>
+
+	int opt;
+
 	while (1) {
 		int this_option_optind = optind ? optind : 1;
 		int option_index = 0;
@@ -78,6 +83,7 @@ void process_options(int argc, char **argv)
 		}
 
 	} // while(1)
+	return opts;
 } // process_options()
 //</glshortspost>
 //<tail>

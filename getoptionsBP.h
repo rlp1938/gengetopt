@@ -33,15 +33,15 @@
 #include <linux/limits.h>
 #include <libgen.h>
 
-int opt;
-char *helpmsg;
-char *optstr;
 
 /* user declarations */
+typedef struct options_ {
 //</preamble>
 //<tail>
+} options_t;
+
 void dohelp(int forced);
-void process_options(int argc, char **argv);
+options_t process_options(int argc, char **argv);
 
 #endif
 //</tail>

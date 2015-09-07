@@ -76,27 +76,30 @@ process_options(int argc, char **argv)
 			case 'h':
 				dohelp(0);
 				break;
-		case 'i':
-			opts.inter = 1;
-			break;
-		case 'g':
-			opts.gen = 1;
-			break;
-		case 'c':
-			opts.cols = strtol(optarg, NULL, 10);
-			break;
-		case 'd':
-			if (fileexists("helpTXT.c") == 0) unlink("helpTXT.c");
-			if (fileexists("usageTXT.c") == 0) unlink("usageTXT.c");
-			if (fileexists("declTXT.h") == 0) unlink("declTXT.h");
-			if (fileexists("defltTXT.c") == 0) unlink("defltTXT.c");
-			if (fileexists("socodeTXT.c") == 0) unlink("socodeTXT.c");
-			if (fileexists("locodeTXT.c") == 0) unlink("locodeTXT.c");
-			if (fileexists("lostructTXT.c") == 0)
+			case 'i':
+				opts.inter = 1;
+				break;
+			case 'g':
+				opts.gen = 1;
+				break;
+			case 'c':
+				opts.cols = strtol(optarg, NULL, 10);
+				break;
+			case 'd':
+				if (fileexists("helpTXT.c") == 0) unlink("helpTXT.c");
+				if (fileexists("usageTXT.c") == 0) unlink("usageTXT.c");
+				if (fileexists("declTXT.h") == 0) unlink("declTXT.h");
+				if (fileexists("defltTXT.c") == 0) unlink("defltTXT.c");
+				if (fileexists("socodeTXT.c") == 0)
+					unlink("socodeTXT.c");
+				if (fileexists("locodeTXT.c") == 0)
+					unlink("locodeTXT.c");
+				if (fileexists("lostructTXT.c") == 0)
 					unlink("lostructTXT.c");
-			if (fileexists("noargsTXT.c") == 0) unlink("noargsTXT.c");
-			exit(EXIT_SUCCESS);
-			break;
+				if (fileexists("noargsTXT.c") == 0)
+					unlink("noargsTXT.c");
+				exit(EXIT_SUCCESS);
+				break;
 			case ':':
 				fprintf(stderr, "Option %s requires an argument\n",
 							argv[this_option_optind]);
@@ -107,8 +110,7 @@ process_options(int argc, char **argv)
 								argv[this_option_optind]);
 				dohelp(1);
 				break;
-		}
-
+		} // switch(opt)
 	} // while(1)
 
 	return opts;
