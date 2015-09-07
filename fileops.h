@@ -50,6 +50,6 @@ int direxists(const char *path);
 int fileexists(const char *path);
 void doread(int fd, size_t bcount, char *result);
 void dowrite(int fd, char *writebuf);
-int getans(char *prompt, char *choices);
+int getans(const char *prompt, const char *choices);
 
 #endif

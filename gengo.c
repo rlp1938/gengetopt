@@ -50,9 +50,9 @@ int ioflag;
 char *getoptionsBP_C, *getoptionsBP_H, *mainBP_C, *MakefileBP_;
 
 static void getoptdata(char *useroptstring);
-static void getmultilines(char *multi, char *display, unsigned maxlen,
+static void getmultilines(char *multi, const char *display, unsigned maxlen,
 			int wanteol);
-static void getuserinput(char *prompt, char *reply);
+static void getuserinput(const char *prompt, char *reply);
 static void generatecode(const char *progname, int cols);
 static void fatal(const char *msg);
 static fdata fmtusagelines(const char *progname, char *from, char *to);
@@ -401,7 +401,7 @@ void getoptdata(char *useroptstring)
 	fclose(fpnoarg);
 } // getoptdata()
 
-void getmultilines(char *multi, char *display, unsigned maxlen,
+void getmultilines(char *multi, const char *display, unsigned maxlen,
 					int wanteol)
 {	/* Inform user using text at display and return many lines '\n'
 	separated in multi. */
@@ -433,7 +433,7 @@ void getmultilines(char *multi, char *display, unsigned maxlen,
 	strcpy(multi, result);
 } // getmultilines()
 
-void getuserinput(char *prompt, char *reply)
+void getuserinput(const char *prompt, char *reply)
 {
 /*	char buf[NAME_MAX];
 	fputs(prompt, stdout);
