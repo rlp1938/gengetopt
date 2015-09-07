@@ -349,8 +349,8 @@ void getoptdata(char *useroptstring)
 	/* the literal "progname" will be replaced by the actual program
 	 * name at program generation time. This name is not known now. */
 	fputs("progname ", fpusage);
-	char *prompt = "usage text";
-	getmultilines(usagebuf, prompt, NAME_MAX, 1);
+	const char *usage_prompt = "usage text";
+	getmultilines(usagebuf, usage_prompt, NAME_MAX, 1);
 	fputs(usagebuf, fpusage);
 	fputs("\n", fpusage);	// empty line marks end of usage lines.
 
@@ -367,8 +367,8 @@ void getoptdata(char *useroptstring)
 	// non-option arguments.
 	fputs(eols, stdout);
 	char noabuf[NAME_MAX];
-	prompt = "how many non-option arguments are to be input, 0..n? ";
-	getuserinput(prompt, noabuf);
+	const char *number_prompt = "how many non-option arguments are to be input, 0..n? ";
+	getuserinput(number_prompt, noabuf);
 	int noargs = strtol(noabuf, NULL, 10);
 	if (noargs == 0) return;	// done
 	FILE *fpnoarg = fopen("noargsTXT.c", "w");
@@ -377,9 +377,9 @@ void getoptdata(char *useroptstring)
 	for (i=0; i < noargs; i++) {
 		// Does the argv[optind] exist?
 		fputs("\tif(!argv[optind]) {\n", fpnoarg);
-		char * prompt = "What kind of object is required?\n"
+		const char * kind_prompt = "What kind of object is required?\n"
 			"Dir(1), File(2), String(3) or something else(4)\n";
-		char ansno = getans(prompt, "1234");
+		char ansno = getans(kind_prompt, "1234");
 		char *rqd[] = {
 			"dir",
 			"file",
