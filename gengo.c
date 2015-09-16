@@ -258,7 +258,6 @@ void getoptdata(char *useroptstring)
 
 		// write other workfiles
 		// declaration
-		char tmpbuf[NAME_MAX];
 		if (!fpdecl) fpdecl = dofopen("declTXT.h", "w");
 		fprintf(fpdecl, declfmt, typebuf, namebuf);
 		/* Set default value, conditionally.
