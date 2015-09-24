@@ -81,7 +81,7 @@ FILE *dofopen(const char *fn, const char *fmode)
 void writefile(const char *to_write, const char *from, const char *to,
 				const char *mode)
 {
-	FILE *fpo;
+/*	FILE *fpo;
 	if (strcmp("-", to_write) == 0) {
 		fpo = stdout;
 	} else {
@@ -96,6 +96,39 @@ void writefile(const char *to_write, const char *from, const char *to,
 		exit(EXIT_FAILURE);
 	}
 	fclose(fpo);
+*/
+	/* rewritten using syscalls because the library calls seem to be
+	 * completely fucked up. */
+	mode_t opmode;
+	int oflags = S_IRUSR | S_IWUSR;
+	if (strcmp("w", mode) == 0) {
+		opmode = O_CREAT | O_TRUNC | O_WRONLY;
+	} else if (strcmp("a", mode) == 0) {
+		opmode = O_APPEND | O_WRONLY;
+	} else {
+		fprintf(stderr, "Open mode must be 'w|a', you had %s.\n", mode);
+		exit(EXIT_FAILURE);
+	}
+	int ofd;
+	if (strcmp("-", to_write) == 0) {
+		ofd = 1;	// stdout
+	} else {
+		ofd = open(to_write, opmode, oflags);
+		if (ofd == -1) {
+			fprintf(stderr, "Open failure on %s\n", to_write);
+			perror(to_write);
+			exit(EXIT_FAILURE);
+		}
+	}
+	ssize_t towrite = to - from;
+	ssize_t written = write(ofd, from, towrite);
+	if (written != towrite) {
+		fprintf(stderr, "Expected to write %li bytes but %li written\n",
+				towrite, written);
+		perror(to_write);
+		exit(EXIT_FAILURE);
+	}
+	if (ofd != 1) close(ofd);
 } // writefile()
 
 int direxists(const char *path)
@@ -113,6 +146,46 @@ int fileexists(const char *path)
 	if (S_ISREG(sb.st_mode)) return 0;
 	return -1;
 } //fileexists()
+
+fdata mem2str(char *pfrom, char *pto)
+{
+	/*
+	 * Checks that last char in memory is '\n', and if not reallocs
+	 * the memory area by 1 byte extra and copies '\n' to that byte.
+	 * Then replaces all '\n' with '\0' and returns the altered data.
+	 *
+	 * Usage:
+	 * fdata mydat = readfile("file", 0, 1);
+	 * mydat = mem2str(mydat.from, mydat.to);
+	 * ...
+	*/
+	char *from = pfrom;
+	char *to = pto;
+	// check last char is '\n'
+	if (*(to - 1) != '\n') {	// grab 1 more byte
+		char *old = from;
+		from = realloc(from, to - from + 1);
+		// been moved?
+		if (old != from) {
+			to = from + (to - old);	// keep old offset
+		}
+		*to = '\n';
+		to++;	// final offset
+	}
+	char *cp = from;
+	while (cp < to) {
+		char *eol = memchr(cp, '\n', to - cp);
+		if (eol) {
+			*eol = '\0';
+			cp = eol;
+		}
+		cp++;
+	}
+	fdata retdat;
+	retdat.from = from;
+	retdat.to = to;
+	return retdat;
+} // mem2str()
 
 void doread(int fd, size_t bcount, char *result)
 {

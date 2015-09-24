@@ -25,3 +25,5 @@
 /test*
 /syncbp.sh
 /Test/*
+/fileslist
+/nooptim.sh
