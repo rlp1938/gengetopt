@@ -16,9 +16,7 @@
 /helpTXT.h
 /noargsTXT.c
 #end of specials
-/install-sh
 /Makefile
-/Makefile.in
 /Makefile.gdb
 /missing
 /stamp-h1
